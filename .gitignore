@@ -5,6 +5,7 @@ balance_config.json
 widget.log
 __pycache__/
 *.pyc
+.trash/
 
 # PyInstaller 构建产物
 build/
