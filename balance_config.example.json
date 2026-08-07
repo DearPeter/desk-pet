@@ -1,0 +1,10 @@
+{
+  "api_key": "",
+  "check_interval_seconds": 60,
+  "cache_probe_enabled": true,
+  "cache_probe_minutes": 30,
+  "cache_probe_model": "deepseek-chat",
+  "follow_codex": false,
+  "text_color": "#000000",
+  "pos": null
+}
