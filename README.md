@@ -2,7 +2,7 @@
 
 一个透明背景的桌面宠物，使用你自己的 GIF 作为动画，并显示 DeepSeek 余额与缓存命中率。
 
-![deskpet](看书.gif)
+![deskpet](gifs/纸飞机.gif)
 
 ## 功能
 
