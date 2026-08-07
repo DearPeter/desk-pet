@@ -236,6 +236,7 @@ def _default_config() -> dict:
         "cache_probe_enabled": True,
         "cache_probe_minutes": 30,
         "cache_probe_model": "deepseek-chat",
+        "show_balance_info": True,
         "follow_codex": False,
         "text_color": DEFAULT_TEXT_COLOR,
         "pos": None,
@@ -721,8 +722,9 @@ class DeskPet:
         self._ensure_frames(self.current, self.scale)
         self._refresh()
         self._play()
-        self.refresh_balance()
-        self.probe_cache_now()
+        if self.cfg.get("show_balance_info", True):
+            self.refresh_balance()
+            self.probe_cache_now()
         # 首次运行：没有 API key 时自动弹出配置窗口，方便收件人使用
         if not get_key(self.cfg):
             self.root.after(500, self._configure_api_key)
@@ -840,6 +842,8 @@ class DeskPet:
     def _compose(self) -> Image.Image:
         frames = self.scaled_frames[self.current]
         frame = self._preview_frame or frames[self.frame_index % len(frames)]
+        if not self.cfg.get("show_balance_info", True):
+            return frame
         fw, fh = frame.size
         balance_size, cache_size = self._text_sizes()
         balance_img = self._render_text_image(
@@ -907,6 +911,7 @@ class DeskPet:
             ("cmd", "立即刷新余额", self.refresh_balance),
             ("cmd", "余额详情", self.show_balance_detail),
             ("cmd", "缓存命中率探测", self.probe_cache_now),
+            ("check", "显示余额/缓存", self._toggle_balance_info, self.cfg.get("show_balance_info", True)),
             ("check", "跟随 Codex", self._toggle_follow_codex, self.cfg.get("follow_codex", False)),
             ("check", "置顶", self._toggle_topmost, self.topmost),
             ("sep",),
@@ -1064,8 +1069,18 @@ class DeskPet:
         save_config(self.cfg)
         self.seen_codex = codex_running()
 
+    def _toggle_balance_info(self) -> None:
+        self.cfg["show_balance_info"] = not self.cfg.get("show_balance_info", True)
+        save_config(self.cfg)
+        if self.cfg["show_balance_info"]:
+            self.refresh_balance()
+            self.probe_cache_now()
+        self._refresh()
+
     # ---------- 余额 / 缓存 ----------
     def refresh_balance(self) -> None:
+        if not self.cfg.get("show_balance_info", True):
+            return
         key = get_key(self.cfg)
         if not key:
             self.balance_text = "未配置 Key"
@@ -1120,6 +1135,8 @@ class DeskPet:
         self._refresh()
 
     def probe_cache_now(self) -> None:
+        if not self.cfg.get("show_balance_info", True):
+            return
         key = get_key(self.cfg)
         if not key:
             return
@@ -1169,12 +1186,14 @@ class DeskPet:
 
     # ---------- 轮询 / 跟随 ----------
     def _poll(self) -> None:
-        self.refresh_balance()
+        if self.cfg.get("show_balance_info", True):
+            self.refresh_balance()
         interval = max(10, int(self.cfg.get("check_interval_seconds", 60))) * 1000
         self.root.after(interval, self._poll)
 
     def _cache_poll(self) -> None:
-        self.probe_cache_now()
+        if self.cfg.get("show_balance_info", True):
+            self.probe_cache_now()
         interval = max(5, int(self.cfg.get("cache_probe_minutes", 30))) * 60000
         self.root.after(interval, self._cache_poll)
 
@@ -1190,7 +1209,8 @@ class DeskPet:
                 log("codex detected open -> show pet")
                 self.root.deiconify()
                 self.layered.update(self._compose(), self.x, self.y)
-                self.refresh_balance()
+                if self.cfg.get("show_balance_info", True):
+                    self.refresh_balance()
         elif self.seen_codex:
             if self.root.state() != "withdrawn":
                 log("codex closed -> hide pet")

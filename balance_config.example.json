@@ -4,6 +4,7 @@
   "cache_probe_enabled": true,
   "cache_probe_minutes": 30,
   "cache_probe_model": "deepseek-chat",
+  "show_balance_info": true,
   "follow_codex": false,
   "text_color": "#000000",
   "pos": null
