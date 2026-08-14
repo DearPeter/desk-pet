@@ -92,6 +92,17 @@ def app_dir() -> Path:
     return Path(__file__).resolve().parent
 
 
+def resource_root() -> Path:
+    """打包后的 Resources 根目录（py2app 设的 RESOURCEPATH；pyinstaller 用 _MEIPASS）。"""
+    res = os.environ.get("RESOURCEPATH")
+    if res:
+        return Path(res)
+    meipass = getattr(sys, "_MEIPASS", None)
+    if meipass:
+        return Path(meipass)
+    return app_dir()
+
+
 def log(msg: str) -> None:
     try:
         with open(app_dir() / "widget.log", "a", encoding="utf-8") as f:
@@ -298,6 +309,9 @@ class PetRenderer:
             if paths:
                 return paths
         candidates = []
+        # 打包后查找顺序：py2app Resources/、pyinstaller _MEIPASS/、脚本旁
+        if os.environ.get("RESOURCEPATH"):
+            candidates.append(Path(os.environ["RESOURCEPATH"]) / "gifs")
         if hasattr(sys, "_MEIPASS"):
             candidates.append(Path(sys._MEIPASS) / "gifs")
         candidates.append(app_dir() / "gifs")
