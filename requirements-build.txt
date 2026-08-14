@@ -1,0 +1,6 @@
+# 仅打包/构建依赖。运行 .app 不需要这些。
+py2app>=0.28
+numpy
+pillow
+pyobjc-framework-Cocoa
+pyobjc-framework-Quartz

@@ -71,3 +71,47 @@ python3 -m venv .venv
 - 打包成 `.app` 需要用 `py2app` 而不是 `pyinstaller --onefile`（后者是 Windows 的 exe 路线）。
 - 「跟随 Codex」匹配的是进程名 `ChatGPT` 与 `codex`；若你的客户端进程名不同，
   请修改 `desk_pet_mac.py` 顶部的 `CODEX_PROCESSES`。
+
+## 分发给朋友（未签名路线，零成本）
+
+本仓库没有 Apple Developer 账号，`dist/杰哥桌宠.app` 仅为 ad-hoc 签名。
+**macOS Gatekeeper 默认会拦截未公证应用**，朋友下载后双击会看到
+「无法打开，因为来自身份不明的开发者」。
+
+### 朋友那边的步骤（一次性）
+
+1. 解压 `杰哥桌宠-v0.1.0.zip`，得到 `杰哥桌宠.app`
+2. **右键** `杰哥桌宠.app` → **打开** → 在弹窗里点 **打开**
+3. 之后双击就能正常启动了
+
+（如果右键也没出现「打开」选项，说明对方的 macOS 比 Sonoma 还严格，
+那就先去「系统设置 → 隐私与安全性」，在最下方点「仍要打开」即可。）
+
+### 你这边生成 zip 的命令
+
+```bash
+./.venv/bin/python setup.py py2app
+codesign --force --deep --sign - dist/杰哥桌宠.app
+find dist/杰哥桌宠.app \( -name ".DS_Store" -o -name "__pycache__" \) -delete
+ditto -c -k --sequesterRsrc --keepParent \
+    dist/杰哥桌宠.app dist/杰哥桌宠-v0.1.0.zip
+shasum -a 256 dist/杰哥桌宠-v0.1.0.zip
+```
+
+### 让朋友看到「这软件就是来自你」
+
+只分发 zip 的话，朋友那边看「开发者」一栏是空的（ad-hoc）。
+想看到你的名字，需要 ¥99/年的 Apple Developer 账号并跑 `notarytool`。
+以本仓库目前的体量，这笔开销不划算，建议用上面的右键 → 打开方案过渡。
+
+## 从源码重新打包（开发者用）
+
+```bash
+python3 -m venv .venv
+./.venv/bin/python -m pip install -r requirements-build.txt
+./.venv/bin/python setup.py py2app
+codesign --force --deep --sign - dist/杰哥桌宠.app
+```
+
+构建时会从 `gifs/坐坐.gif` 自动取一帧生成 `pet_icon.icns`（已签入仓库）。
+如要换图标，替换 `pet_icon.icns` 后重新跑 `setup.py py2app` 即可。
